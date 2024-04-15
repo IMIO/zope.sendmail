@@ -27,17 +27,28 @@ from time import strftime
 from socket import gethostname
 
 from zope.interface import implements
+from zope.interface import implementer
 from zope.sendmail.interfaces import IDirectMailDelivery, IQueuedMailDelivery
 from zope.sendmail.maildir import Maildir
-from transaction.interfaces import IDataManager
+from transaction.interfaces import ISavepointDataManager
+from transaction.interfaces import IDataManagerSavepoint
 import transaction
 
 # BBB: this import is needed for backward compatibility with older versions of
 # zope.sendmail which defined QueueProcessorThread in this module
 from zope.sendmail.queue import QueueProcessorThread
 
+
+# backported from mauritsvanrees PR #36
+@implementer(IDataManagerSavepoint)
+class _NoOpSavepoint(object):
+
+    def rollback(self):
+        return
+
+
+@implementer(ISavepointDataManager)
 class MailDataManager(object):
-    implements(IDataManager)
 
     def __init__(self, callable, args=(), onAbort=None):
         self.callable = callable
@@ -55,6 +66,12 @@ class MailDataManager(object):
 
     def sortKey(self):
         return id(self)
+
+    def savepoint(self):
+        # We do not need savepoint/rollback, but some code (like CMFEditions)
+        # uses savepoints, and breaks when one datamanager does not have this.
+        # So provide a dummy implementation.
+        return _NoOpSavepoint()
 
     # No subtransaction support.
     def abort_sub(self, transaction):

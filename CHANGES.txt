@@ -5,7 +5,8 @@ CHANGES
 3.7.6 (unreleased)
 ------------------
 
-- TBD
+- Backported commit: Add minimal savepoint support, so we do not fail if any code tries to create a savepoint.
+  (`#35 <https://github.com/zopefoundation/zope.sendmail/issues/35>`_).
 
 3.7.5 (2012-05-23)
 ------------------
